@@ -1,0 +1,5 @@
+asciimatics
+python_vlc
+beautifulsoup4
+requests
+youtube_dl
