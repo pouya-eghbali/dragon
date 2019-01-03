@@ -1,3 +1,0 @@
-[console_scripts]
-dragon = dragon_player.cli:main
-
