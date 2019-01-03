@@ -46,5 +46,5 @@ Dragon supports the following text based commands:
 
 
 Notes:
-- Downloaded songs are added to main playlist, you need to reload main after download.
+- Downloaded songs are added to current playlist, you need to reload playlist after download.
 - Operations on playlists are saved to disk immediately.

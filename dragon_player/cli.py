@@ -32,7 +32,7 @@ def download(url, dragon, on_dl_completed, print_dl_progress):
 
 class dragon(object):
     def __init__(self, screen, fps = 120):
-        self.version = '0.0.1'
+        self.version = '0.4'
         self.screen = screen
         self.cmd = ''
         self.fps = fps
@@ -260,15 +260,15 @@ class dragon(object):
 
     def on_dl_completed(self):
         self.print_dl_message('Adding to main playlist...')
-        with open(os.path.expanduser('~/Dragon/main.json'), 'r', encoding = 'utf-8') as f:
-            main = json.load(f)
-        main.append({
+        with open(os.path.expanduser(f'~/Dragon/{self.pl_name}.json'), 'r', encoding = 'utf-8') as f:
+            playlist = json.load(f)
+        playlist.append({
             'file': f'{self.yid}',
             'yid': self.yid,
             'title': self.yt_title
         })
-        with open(os.path.expanduser('~/Dragon/main.json'), 'w', encoding = 'utf-8') as f:
-            json.dump(main, f, indent='  ')
+        with open(os.path.expanduser(f'~/Dragon/{self.pl_name}.json'), 'w', encoding = 'utf-8') as f:
+            json.dump(playlist, f, indent='  ')
         self.print_dl_message('Download completed.')
 
     def print_dl_progress(self, stream, chunk, file_handle, bytes_remaining):
