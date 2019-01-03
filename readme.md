@@ -1,7 +1,7 @@
 
 # Dragon
 
-Dragon is a CLI YouTube music player app. This is for personal use only. I'm not responsible for any copyright related issues.
+Dragon is a CLI YouTube music player app.
 
 ![Dragon Screenshot](https://github.com/pouya-eghbali/dragon/raw/master/dragon.png)
 

@@ -32,7 +32,7 @@ def download(url, dragon, on_dl_completed, print_dl_progress):
 
 class dragon(object):
     def __init__(self, screen, fps = 120):
-        self.version = '0.4'
+        self.version = '0.5'
         self.screen = screen
         self.cmd = ''
         self.fps = fps
@@ -40,7 +40,7 @@ class dragon(object):
         self.dl_list = []
         self.media_dir = '~/Dragon'
         self.mediaplayer = vlc.MediaPlayer()
-        self.curr_song = 0
+        self.curr_song = None
         self.media_name = None
         self.yid = None
         self.dl_percentage = 0
@@ -48,6 +48,7 @@ class dragon(object):
         self.continuous = True
         self.looping = True
         self.playing = False
+        self.pl_highlight_index = 0
         with open(os.path.expanduser('~/Dragon/main.json'), 'r', encoding='utf-8') as f:
             self.playlist = list(enumerate(json.load(f)))
             self.pl_index = len(self.playlist)
@@ -71,14 +72,28 @@ class dragon(object):
                 self.screen.print_at(' '*len(self.cmd), 6, 16)
                 self.cmd = self.cmd[:-1]
             elif key_code in [10, 13]: #return
-                command = self.cmd
-                self.screen.print_at(' '*len(self.cmd), 6, 16)
-                self.screen.refresh()
-                self.cmd = ''
-                self.run_cmd(command)
+                if not self.cmd:
+                    if self.pl_highlight_index == self.curr_song and self.mediaplayer.is_playing():
+                        self.playing = False
+                        self.mediaplayer.pause()
+                    elif self.pl_highlight_index == self.curr_song and not self.mediaplayer.is_playing():
+                        self.playing = True
+                        self.mediaplayer.play()
+                    else:
+                        self.playing = False
+                        self.mediaplayer.pause()
+                        self.play_from_list(self.pl_highlight_index)
+                else:
+                    command = self.cmd
+                    self.screen.print_at(' '*len(self.cmd), 6, 16)
+                    self.screen.refresh()
+                    self.cmd = ''
+                    self.run_cmd(command)
             elif key_code == -204: #up
+                self.pl_highlight_index -= 1
                 self.print_playlist(self.pl_index - 1)
             elif key_code == -206: #down
+                self.pl_highlight_index += 1
                 self.print_playlist(self.pl_index + 1)
             else:
                 try:
@@ -93,6 +108,7 @@ class dragon(object):
             total = self.ms_to_human(self.mediaplayer.get_length())
             self.screen.print_at(' '*self.screen.width, 0, 14)
             self.screen.print_at(f'{self.media_name} - {now} of {total}', 4, 14)
+            self.screen.set_title(f'Dragon Player - {self.media_name}')
 
     def play_from_list(self, index):
         try:
@@ -128,6 +144,7 @@ class dragon(object):
             sys.exit(0)
         elif re.match(r'^(s|sc|scroll) ([0-9]+)$', cmd):
             command, query = re.match(r'([^ ]+) ?(.*)?', cmd).groups()
+            self.pl_highlight_index = int(query)
             self.print_playlist(int(query))
         elif re.match(r'^(f|s|find|search) (.+)$', cmd):
             command, query = re.match(r'([^ ]+) ?(.*)?', cmd).groups()
@@ -315,11 +332,18 @@ class dragon(object):
         self.pl_index = mid
         start = mid - 2
         if start < 0: start = 0
+        if self.pl_highlight_index >= len(self.playlist):
+            self.pl_highlight_index = len(self.playlist) - 1
+        if self.pl_highlight_index <= 0:
+            self.pl_highlight_index = 0
         if self.playlist:
             for i in range(0, 5):
                 self.clear_line(6+i)
             for i, item in self.playlist[start:start+5]:
-                self.screen.print_at(f'{i}: {item["title"]}', 4, 6+i-start)
+                if i == self.pl_highlight_index:
+                    self.screen.print_at(f' {i}: {item["title"]} ', 3, 6+i-start, colour=0, bg=6)
+                else:
+                    self.screen.print_at(f'{i}: {item["title"]}', 4, 6+i-start)
 
     def print_cmd(self):
         self.clear_line(16)
@@ -363,6 +387,7 @@ class dragon(object):
                 self.play_from_list(self.curr_song)
 
     def run_forever(self):
+        self.screen.set_title(f'Dragon Player')
         self.print_info()
         self.print_playlist()
         while True:
@@ -388,3 +413,6 @@ def main():
             json.dump([], f)
 
     Screen.wrapper(dragon)
+
+if __name__ == '__main__':
+    main()
