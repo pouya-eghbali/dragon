@@ -8,7 +8,7 @@ with open(path.join(this_directory, 'readme.md'), encoding='utf-8') as f:
 
 setup(
     name='dragon-player',
-    version="0.2",
+    version="0.3",
     packages=find_packages(),
     include_package_data=False,
     install_requires=["asciimatics", "python_vlc", "beautifulsoup4", "requests", "youtube_dl"],
@@ -17,7 +17,7 @@ setup(
     },
     long_description=long_description,
     long_description_content_type='text/markdown',
-    short_description="The CLI YouTube Player",
+    description="The CLI YouTube Player",
     author='Pouya Eghbali',
     author_email='pouya.eghbali@yandex.ch',
     url='https://github.com/pouya-eghbali/dragon',
