@@ -1,9 +1,8 @@
 from asciimatics.screen import Screen
 from time import sleep
-import re, requests, random, os, sys
+import re, os, sys
 from dragon_player.youtube_api import do_search
-from pytube import YouTube
-import shutil, os.path, json
+import os.path, json
 from dragon_player.decorators import run_async
 import vlc, json, subprocess
 from youtube_dl import YoutubeDL
@@ -32,7 +31,7 @@ def download(url, dragon, on_dl_completed, print_dl_progress):
 
 class dragon(object):
     def __init__(self, screen, fps = 120):
-        self.version = '0.5'
+        self.version = '0.6'
         self.screen = screen
         self.cmd = ''
         self.fps = fps
