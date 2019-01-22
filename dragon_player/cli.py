@@ -32,7 +32,7 @@ def download(url, dragon, on_dl_completed, print_dl_progress):
 
 class dragon(object):
     def __init__(self, screen, fps = 120):
-        self.version = '0.8'
+        self.version = '0.9'
         self.screen = screen
         self.cmd = ''
         self.fps = fps
@@ -370,6 +370,8 @@ class dragon(object):
     def draw_frame(self):
         self.process_events()
         self.screen.refresh()
+        # required for tabbed Konsole...
+        self.screen.reset()
         #sleep(1/self.fps)
 
     def if_play_next(self):
@@ -388,9 +390,9 @@ class dragon(object):
 
     def run_forever(self):
         #self.screen.set_title(f'Dragon Player')
-        self.print_info()
-        self.print_playlist()
         while True:
+            self.print_info()
+            self.print_playlist()
             self.print_cmd()
             self.print_media()
             self.print_status()

@@ -8,7 +8,7 @@ with open(path.join(this_directory, 'readme.md'), encoding='utf-8') as f:
 
 setup(
     name='dragon-player',
-    version="0.8",
+    version="0.9",
     packages=find_packages(),
     include_package_data=False,
     install_requires=["asciimatics", "python_vlc", "beautifulsoup4", "requests", "youtube_dl"],
