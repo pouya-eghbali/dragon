@@ -32,7 +32,7 @@ def download(url, dragon, on_dl_completed, print_dl_progress):
 
 class dragon(object):
     def __init__(self, screen, fps = 120):
-        self.version = '0.7'
+        self.version = '0.8'
         self.screen = screen
         self.cmd = ''
         self.fps = fps
@@ -108,7 +108,7 @@ class dragon(object):
             total = self.ms_to_human(self.mediaplayer.get_length())
             self.screen.print_at(' '*self.screen.width, 0, 14)
             self.screen.print_at(f'{self.media_name} - {now} of {total}', 4, 14)
-            self.screen.set_title(f'Dragon Player - {self.media_name}')
+            #self.screen.set_title(f'Dragon Player - {self.media_name}')
 
     def play_from_list(self, index):
         try:
