@@ -18,6 +18,7 @@ def download(url, dragon, on_dl_completed, print_dl_progress):
         'noplaylist' : True,
         'postprocessors': [],
         'progress_hooks': [my_hook],
+        'quiet': True,
         }
     ydl = YoutubeDL(ydl_opts)
     meta = ydl.extract_info(url, download=False)
@@ -31,14 +32,14 @@ def download(url, dragon, on_dl_completed, print_dl_progress):
 
 class dragon(object):
     def __init__(self, screen, fps = 120):
-        self.version = '0.6'
+        self.version = '0.7'
         self.screen = screen
         self.cmd = ''
         self.fps = fps
         self.command = ''
         self.dl_list = []
         self.media_dir = '~/Dragon'
-        self.mediaplayer = vlc.MediaPlayer()
+        self.mediaplayer = vlc.MediaPlayer("--quiet")
         self.curr_song = None
         self.media_name = None
         self.yid = None
@@ -386,7 +387,7 @@ class dragon(object):
                 self.play_from_list(self.curr_song)
 
     def run_forever(self):
-        self.screen.set_title(f'Dragon Player')
+        #self.screen.set_title(f'Dragon Player')
         self.print_info()
         self.print_playlist()
         while True:
