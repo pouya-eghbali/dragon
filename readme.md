@@ -32,6 +32,7 @@ Dragon supports the following text based commands:
 | repeat | r | | r | repeat the current track
 | continuous | c | | c | continue playing next track after current one is finished
 | loop | l | | l | loop the playlist
+| random | ra | | ra | random play (it's random, not shuffle)
 | + | | time | `+1m` or `+1s` or `+1h` or `+1` | go forward
 | - | | time | `-1m` or `-1s` or `-1h` or `-1` | go backward
 | scroll | s, sc | number | sc 4 | scroll to number
@@ -42,6 +43,7 @@ Dragon supports the following text based commands:
 | remove list | rm list, rl, rml | text: playlist name | rm classical | remove playlist
 | add to list | atl, add, a | number: index and text: playlist name | atl 1 heavy metal | add index from current list to another playlist
 | remove from list | remove, rfl, r | number:index | r 1 | remove song from current playlist
+| clean | cl | | cl | remove downloaded files that are not in any of the playlists
 | rename | rn | number: index and text: song name | rename 1 Metallica - One | rename song at index
 
 

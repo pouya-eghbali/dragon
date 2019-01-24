@@ -6,6 +6,7 @@ import os.path, json
 from dragon_player.decorators import run_async
 import vlc, json, subprocess
 from youtube_dl import YoutubeDL
+from random import choice
 
 def download(url, dragon, on_dl_completed, print_dl_progress):
     dragon.print_dl_message('Getting streams...')
@@ -32,7 +33,7 @@ def download(url, dragon, on_dl_completed, print_dl_progress):
 
 class dragon(object):
     def __init__(self, screen, fps = 120):
-        self.version = '0.9'
+        self.version = '0.10'
         self.screen = screen
         self.cmd = ''
         self.fps = fps
@@ -47,8 +48,12 @@ class dragon(object):
         self.repeat = False
         self.continuous = True
         self.looping = True
+        self.random = False
         self.playing = False
         self.pl_highlight_index = 0
+        self.dl_highlight_index = 0
+        self.in_dl_list = False
+
         with open(os.path.expanduser('~/Dragon/main.json'), 'r', encoding='utf-8') as f:
             self.playlist = list(enumerate(json.load(f)))
             self.pl_index = len(self.playlist)
@@ -73,16 +78,22 @@ class dragon(object):
                 self.cmd = self.cmd[:-1]
             elif key_code in [10, 13]: #return
                 if not self.cmd:
-                    if self.pl_highlight_index == self.curr_song and self.mediaplayer.is_playing():
-                        self.playing = False
-                        self.mediaplayer.pause()
-                    elif self.pl_highlight_index == self.curr_song and not self.mediaplayer.is_playing():
-                        self.playing = True
-                        self.mediaplayer.play()
+                    if self.in_dl_list:
+                        index = self.dl_highlight_index
+                        self.yid = self.dl_list[index][1]
+                        url = f'http://www.youtube.com/watch?v={self.yid}'
+                        download(url, self, self.on_dl_completed, self.print_dl_progress)
                     else:
-                        self.playing = False
-                        self.mediaplayer.pause()
-                        self.play_from_list(self.pl_highlight_index)
+                        if self.pl_highlight_index == self.curr_song and self.mediaplayer.is_playing():
+                            self.playing = False
+                            self.mediaplayer.pause()
+                        elif self.pl_highlight_index == self.curr_song and not self.mediaplayer.is_playing():
+                            self.playing = True
+                            self.mediaplayer.play()
+                        else:
+                            self.playing = False
+                            self.mediaplayer.pause()
+                            self.play_from_list(self.pl_highlight_index)
                 else:
                     command = self.cmd
                     self.screen.print_at(' '*len(self.cmd), 6, 16)
@@ -90,11 +101,19 @@ class dragon(object):
                     self.cmd = ''
                     self.run_cmd(command)
             elif key_code == -204: #up
-                self.pl_highlight_index -= 1
-                self.print_playlist(self.pl_index - 1)
+                if self.in_dl_list:
+                    self.dl_highlight_index -= 1
+                    self.print_dl_list(self.dl_index - 1)
+                else:
+                    self.pl_highlight_index -= 1
+                    self.print_playlist(self.pl_index - 1)
             elif key_code == -206: #down
-                self.pl_highlight_index += 1
-                self.print_playlist(self.pl_index + 1)
+                if self.in_dl_list:
+                    self.dl_highlight_index += 1
+                    self.print_dl_list(self.dl_index + 1)
+                else:
+                    self.pl_highlight_index += 1
+                    self.print_playlist(self.pl_index + 1)
             else:
                 try:
                     self.cmd += chr(key_code)
@@ -149,6 +168,8 @@ class dragon(object):
         elif re.match(r'^(f|s|find|search) (.+)$', cmd):
             command, query = re.match(r'([^ ]+) ?(.*)?', cmd).groups()
             self.dl_list = do_search(query)
+            self.dl_index = 0
+            self.dl_highlight_index = 0
             self.print_dl_list()
         elif re.match(r'^(m|ml|mkl|mk list|make list) (.+)$', cmd):
             command, query = re.match(r'([^ ]+) ?(.*)?', cmd).groups()
@@ -212,7 +233,10 @@ class dragon(object):
         elif re.match(r'^(r|rfl|remove|remove from list) ([0-9]+)$', cmd):
             command, index = re.match(r'([^ ]+) ([0-9]+)$', cmd).groups()
             index = int(index)
-            self.playlist.remove(index)
+            try:
+                del self.playlist[index]
+            except:
+                raise Exception(f'{len(self.playlist)} - {index}')
             try:
                 with open(os.path.expanduser(f'~/Dragon/{self.pl_name}.json'), 'w', encoding='utf-8') as f:
                     json.dump([i[1] for i in self.playlist], f, indent='  ')
@@ -240,6 +264,8 @@ class dragon(object):
             self.continuous = not self.continuous
         elif re.match(r'^(l|loop)$', cmd):
             self.looping = not self.looping
+        elif re.match(r'^(ra|random)$', cmd):
+            self.random = not self.random
         elif re.match(r'^(\+|-) ?([0-9]+)$', cmd):
             sign, n = re.match(r'^(\+|-) ?([0-9]+)$', cmd).groups()
             now = self.mediaplayer.get_time()
@@ -273,6 +299,23 @@ class dragon(object):
             self.yid = self.dl_list[index][1]
             url = f'http://www.youtube.com/watch?v={self.yid}'
             download(url, self, self.on_dl_completed, self.print_dl_progress)
+        elif re.match(r'^(cl|clean)$', cmd):
+            all_files = os.listdir(os.path.expanduser(f'~/Dragon'))
+            all_media = [file for file in all_files if not file.endswith('.json')]
+            all_lists = [file for file in all_files if file.endswith('.json')]
+            all_media_refs = set()
+            for pl in all_lists:
+                with open(os.path.expanduser(f'~/Dragon/{pl}'), 'r', encoding='utf-8') as f:
+                    pl = json.load(f)
+                    for media in pl:
+                        all_media_refs.add(media['file'])
+            count = 0
+            for media in all_media:
+                if not media in all_media_refs:
+                    os.remove(os.path.expanduser(f'~/Dragon/{media}'))
+                    count += 1
+            self.print_status_message(f'Removed {count} files')
+
         pass
 
     def on_dl_completed(self):
@@ -317,14 +360,42 @@ class dragon(object):
         self.screen.print_at(' ', 0, self.screen.height + 1)
         self.screen.refresh()
 
-    def print_dl_list(self):
+    def print_list(self):
+        if self.in_dl_list:
+            self.print_dl_list(self.dl_index)
+        else:
+            self.print_playlist(self.pl_index)
+
+    def print_dl_list(self, mid=2):
+        self.in_dl_list = True
+        if mid > len(self.dl_list) - 3:
+            mid = len(self.dl_list) - 3
+        if mid - 2 <= 0:
+            mid = 2
+        self.dl_index = mid
+        start = mid - 2
+        if start < 0: start = 0
+        if self.dl_highlight_index >= len(self.dl_list):
+            self.dl_highlight_index = len(self.dl_list) - 1
+        if self.dl_highlight_index <= 0:
+            self.dl_highlight_index = 0
+        if self.dl_list:
+            for i in range(0, 5):
+                self.clear_line(6+i)
+            for i, item in enumerate(self.dl_list[start:start+5]):
+                if start+i == self.dl_highlight_index:
+                    self.screen.print_at(f' {start+i}: {item[0]} ', 3, 6+i, colour=0, bg=6)
+                else:
+                    self.screen.print_at(f'{start+i}: {item[0]}', 4, 6+i)
+        '''
         if self.dl_list:
             for i in range(0, 5):
                 self.clear_line(6+i)
             for i, item in enumerate(self.dl_list[:5]):
-                self.screen.print_at(f'{i}: {item[0]}', 4, 6+i)
+                self.screen.print_at(f'{i}: {item[0]}', 4, 6+i)'''
 
     def print_playlist(self, mid=2):
+        self.in_dl_list = False
         if mid > len(self.playlist) - 3:
             mid = len(self.playlist) - 3
         if mid - 2 <= 0:
@@ -365,6 +436,10 @@ class dragon(object):
             status.append('[L]')
         else:
             status.append('L')
+        if self.random:
+            status.append('[RA]')
+        else:
+            status.append('RA')
         self.screen.print_at(' '.join(status), 4, 13)
 
     def draw_frame(self):
@@ -377,7 +452,9 @@ class dragon(object):
     def if_play_next(self):
         if self.playing and self.continuous and not self.mediaplayer.is_playing():
             if not self.repeat:
-                if self.curr_song + 1 == len(self.playlist):
+                if self.random:
+                    self.curr_song = choice(range(len(self.playlist))) - 1
+                elif self.curr_song + 1 == len(self.playlist):
                     if self.looping:
                         self.curr_song = -1
                     else:
@@ -392,7 +469,7 @@ class dragon(object):
         #self.screen.set_title(f'Dragon Player')
         while True:
             self.print_info()
-            self.print_playlist()
+            self.print_list()
             self.print_cmd()
             self.print_media()
             self.print_status()
